@@ -5,6 +5,8 @@
 
 > AX Campus 1기 · 빌더트랙 1차 과제 Level 1 (보고 등록하기). 모든 회사·과정 정보는 가상 데이터입니다.
 
+- **배포 주소: https://bridgecamp-level1-frontend.vercel.app** (운영 모드: https://bridgecamp-level1-frontend.vercel.app/admin)
+- 백엔드 주소: https://bridgecamp-level1-backend.onrender.com/health
 - 기획서: [기획서.md](./기획서.md)
 - 백엔드 저장소: [bridgecamp-level1-backend](https://github.com/kimdo127-cloud/bridgecamp-level1-backend)
 
