@@ -67,9 +67,14 @@ export async function createCourse(input: CourseInput): Promise<CourseWithCohort
   return request<CourseWithCohorts>("/courses", { method: "POST", body: JSON.stringify(input) });
 }
 
-// 대표 사진 바꾸기 (null이면 사진을 빼고 분야 그림으로)
-export async function updateThumbnail(courseId: number, thumbnail: string | null): Promise<CourseWithCohorts> {
-  return request<CourseWithCohorts>(`/courses/${courseId}/thumbnail`, { method: "PATCH", body: JSON.stringify({ thumbnail }) });
+// 과정 정보 수정 (대표 사진 포함, 기수 제외)
+export async function updateCourse(courseId: number, input: Omit<CourseInput, "cohorts">): Promise<CourseWithCohorts> {
+  return request<CourseWithCohorts>(`/courses/${courseId}`, { method: "PATCH", body: JSON.stringify(input) });
+}
+
+// 기수 수정. 이미 시작한 기수는 백엔드가 거절한다
+export async function updateCohort(courseId: number, cohortId: number, input: CohortInput): Promise<Cohort> {
+  return request<Cohort>(`/courses/${courseId}/cohorts/${cohortId}`, { method: "PATCH", body: JSON.stringify(input) });
 }
 
 // 기수 번호는 백엔드가 그 과정의 마지막 기수 + 1로 붙여서 돌려준다

@@ -78,7 +78,8 @@ export function validateCohort(c: Omit<CohortFormValues, "key">): FieldErrors {
   return errors;
 }
 
-export function validateCourse(v: CourseFormValues): FieldErrors {
+// 과정 등록은 첫 기수가 함께 필요하고, 과정 수정은 과정 정보만 검사한다
+export function validateCourse(v: CourseFormValues, { withCohorts = true } = {}): FieldErrors {
   const errors: FieldErrors = {};
   const set = (key: string, message: string | null) => {
     if (message) errors[key] = message;
@@ -110,6 +111,7 @@ export function validateCourse(v: CourseFormValues): FieldErrors {
   if (v.preparation.trim().length > 300) errors.preparation = "준비 사항은 300자 이내로 적어 주세요.";
   set("description", checkLength(v.description, 10, 1000, "과정 소개를 입력해 주세요.", "과정 소개를 10자 이상, 1000자 이내로 적어 주세요."));
 
+  if (!withCohorts) return errors;
   if (v.cohorts.length === 0) errors.cohorts = "기수를 하나 이상 추가해 주세요.";
   v.cohorts.forEach((c, i) => {
     for (const [field, message] of Object.entries(validateCohort(c))) {

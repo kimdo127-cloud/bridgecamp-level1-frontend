@@ -17,6 +17,7 @@ const THUMB_SIZES = {
   sm: "h-14 w-14 shrink-0 rounded-xl text-2xl",
   md: "h-24 w-24 shrink-0 rounded-2xl text-4xl",
   card: "h-32 w-full text-5xl",
+  fill: "h-full w-full text-4xl",
   lg: "h-48 w-full text-7xl",
 };
 

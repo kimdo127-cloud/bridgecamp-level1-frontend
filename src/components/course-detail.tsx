@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { AdminBar, BottomBar, PreviewBar, CategoryThumb, Chip, FlashToast, HomeLink, Skeleton, StatusScreen, TopBar, primaryButton, type Mode } from "@/components/ui";
-import { ThumbnailEditor } from "@/components/thumbnail-picker";
 import { courseGroup, getCourse, openCohorts } from "@/lib/api";
 import { COMMON_FAQ } from "@/lib/faq";
 import { cohortStatus, cohortStatusLabel, formatDate, formatPrice, formatRange, weeksLabel } from "@/lib/format";
@@ -52,12 +51,7 @@ function CourseDetail({ c, mode }: { c: CourseWithCohorts; mode: Mode }) {
   const cohorts = [...c.cohorts].reverse();
   const [active, setActive] = useState("intro");
   const [toast, setToast] = useState<string | null>(null);
-  const [thumbnail, setThumbnail] = useState(c.thumbnail);
 
-  const showToast = (message: string) => {
-    setToast(message);
-    setTimeout(() => setToast(null), 2000);
-  };
 
   // 스크롤 위치에 맞춰 상단 탭 강조
   useEffect(() => {
@@ -123,19 +117,7 @@ function CourseDetail({ c, mode }: { c: CourseWithCohorts; mode: Mode }) {
       )}
 
       {/* 히어로 */}
-      <div className="relative">
-        <CategoryThumb category={c.category} src={thumbnail} size="lg" />
-        {admin && (
-          <ThumbnailEditor
-            courseId={c.id}
-            value={thumbnail}
-            onSaved={(next, message) => {
-              setThumbnail(next);
-              showToast(message);
-            }}
-          />
-        )}
-      </div>
+      <CategoryThumb category={c.category} src={c.thumbnail} size="lg" />
       <section className="bg-white px-5 pt-5 pb-6">
         <div className="flex flex-wrap gap-1.5">
           <Chip>{c.category}</Chip>
@@ -246,7 +228,15 @@ function CourseDetail({ c, mode }: { c: CourseWithCohorts; mode: Mode }) {
                 return (
                   <li key={x.id} className={`rounded-2xl border px-4 py-3.5 ${status === "upcoming" ? "border-brand-200 bg-brand-50/60" : "border-line"} ${status === "ended" ? "opacity-50" : ""}`}>
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-[15px] font-bold">{x.cohortNo}기</p>
+                      <p className="flex items-center gap-2 text-[15px] font-bold">
+                        {x.cohortNo}기
+                        {/* 운영 모드에서 개강 전 기수만 수정할 수 있다 */}
+                        {admin && status === "upcoming" && (
+                          <Link href={`/admin/courses/${c.id}/cohorts/${x.id}/edit`} className="rounded-md bg-white px-2 py-0.5 text-[12px] font-semibold text-brand-700 ring-1 ring-brand-200 active:bg-brand-50">
+                            수정
+                          </Link>
+                        )}
+                      </p>
                       <Chip tone={status === "upcoming" ? "moss" : status === "ongoing" ? "brand" : "gray"}>
                         {status === "upcoming" ? `모집 중 · ${cohortStatusLabel(x)}` : cohortStatusLabel(x)}
                       </Chip>
@@ -285,12 +275,11 @@ function CourseDetail({ c, mode }: { c: CourseWithCohorts; mode: Mode }) {
       <BottomBar>
         {admin ? (
           <div className="flex items-center gap-3">
-            <div className="min-w-0 shrink-0">
-              <p className="text-[12px] text-ink-soft">기수 {c.cohorts.length}개</p>
-              <p className="text-[15px] font-bold">{next ? `다음 ${next.cohortNo}기 ${cohortStatusLabel(next)}` : "모집 중 기수 없음"}</p>
-            </div>
+            <Link href={`/admin/courses/${c.id}/edit`} className="flex h-13 shrink-0 items-center justify-center rounded-2xl border border-line bg-white px-4 text-[15px] font-semibold text-ink active:bg-surface">
+              과정 수정
+            </Link>
             <Link href={addCohortHref} className={primaryButton}>
-              + 기수 추가하기
+              + 기수 추가
             </Link>
           </div>
         ) : (

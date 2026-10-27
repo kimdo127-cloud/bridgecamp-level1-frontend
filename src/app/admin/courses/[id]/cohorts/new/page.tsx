@@ -1,10 +1,10 @@
 import { Suspense } from "react";
-import NewCohortPage from "./new-cohort";
+import { CohortForm } from "@/components/cohort-form";
 
 export default function Page() {
   return (
     <Suspense>
-      <NewCohortPage />
+      <CohortForm />
     </Suspense>
   );
 }

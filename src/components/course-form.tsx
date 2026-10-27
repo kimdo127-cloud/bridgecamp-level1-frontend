@@ -6,8 +6,8 @@ import { CohortFields } from "@/components/cohort-fields";
 import { ThumbnailPicker } from "@/components/thumbnail-picker";
 import { useFormErrors } from "@/components/use-form-errors";
 import { BottomBar, Field, SectionCard, TopBar, inputClass, primaryButton, secondaryButton, setFlash } from "@/components/ui";
-import { ApiError, createCourse } from "@/lib/api";
-import { CATEGORIES, FORMATS, LEVELS, type Category, type Format, type Level } from "@/lib/types";
+import { ApiError, createCourse, updateCourse } from "@/lib/api";
+import { CATEGORIES, FORMATS, LEVELS, type Category, type CourseWithCohorts, type Format, type Level } from "@/lib/types";
 import { validateCourse, type CohortFormValues, type CourseFormValues } from "@/lib/validation";
 
 let keySeq = 0;
@@ -32,14 +32,35 @@ const INITIAL: CourseFormValues = {
 
 type TextKey = Exclude<keyof CourseFormValues, "cohorts">;
 
-export default function NewCoursePage() {
+function fromCourse(c: CourseWithCohorts): CourseFormValues {
+  return {
+    title: c.title,
+    category: c.category,
+    level: c.level,
+    format: c.format,
+    summary: c.summary,
+    description: c.description,
+    price: String(c.price),
+    defaultCapacity: String(c.defaultCapacity),
+    instructorName: c.instructorName,
+    instructorBio: c.instructorBio,
+    recommendedFor: c.recommendedFor,
+    curriculum: c.curriculum,
+    preparation: c.preparation,
+    cohorts: [],
+  };
+}
+
+// 과정 등록과 과정 수정이 같은 폼을 쓴다. 수정할 때는 기수 칸을 빼고(기수는 따로 수정) 기존 값을 채운다
+export function CourseForm({ course }: { course?: CourseWithCohorts }) {
+  const editing = Boolean(course);
   const router = useRouter();
-  const [values, setValues] = useState<CourseFormValues>(INITIAL);
+  const [values, setValues] = useState<CourseFormValues>(course ? fromCourse(course) : INITIAL);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [thumbnail, setThumbnail] = useState<string | null>(null);
+  const [thumbnail, setThumbnail] = useState<string | null>(course?.thumbnail ?? null);
   // 오류 키(cohorts.0.startDate)와 칸 id(cohorts-0-startDate)를 서로 바꾼다
-  const form = useFormErrors(values, validateCourse, {
+  const form = useFormErrors(values, (v) => validateCourse(v, { withCohorts: !editing }), {
     idToKey: (id) => (id === "cohorts-section" ? "cohorts" : id.replace(/^cohorts-(\d+)-/, "cohorts.$1.")),
     keyToId: (key) => (key === "cohorts" ? "cohorts-section" : key.replaceAll(".", "-")),
   });
@@ -70,7 +91,7 @@ export default function NewCoursePage() {
 
     setSaving(true);
     try {
-      const created = await createCourse({
+      const fields = {
         title: values.title.trim(),
         category: values.category as Category,
         level: values.level as Level,
@@ -85,15 +106,24 @@ export default function NewCoursePage() {
         curriculum: values.curriculum.trim(),
         preparation: values.preparation.trim(),
         thumbnail,
-        cohorts: values.cohorts.map((c) => ({
-          startDate: c.startDate,
-          endDate: c.endDate,
-          capacity: Number(c.capacity),
-          schedule: c.schedule.trim(),
-        })),
-      });
-      setFlash("과정이 등록됐어요");
-      router.replace(`/admin/courses/${created.id}`);
+      };
+      if (course) {
+        await updateCourse(course.id, fields);
+        setFlash("수정한 내용을 저장했어요");
+        router.replace(`/admin/courses/${course.id}`);
+      } else {
+        const created = await createCourse({
+          ...fields,
+          cohorts: values.cohorts.map((c) => ({
+            startDate: c.startDate,
+            endDate: c.endDate,
+            capacity: Number(c.capacity),
+            schedule: c.schedule.trim(),
+          })),
+        });
+        setFlash("과정이 등록됐어요");
+        router.replace(`/admin/courses/${created.id}`);
+      }
     } catch (e) {
       setSaving(false);
       // 백엔드가 거절한 경우 칸별 안내를, 연결 문제면 전체 안내를 보여 준다
@@ -109,7 +139,7 @@ export default function NewCoursePage() {
 
   return (
     <main>
-      <TopBar title="과정 등록" backHref="/admin" />
+      <TopBar title={editing ? "과정 수정" : "과정 등록"} backHref={course ? `/admin/courses/${course.id}` : "/admin"} />
 
       <form noValidate onSubmit={onSubmit} onBlur={form.onBlur} className="space-y-3 px-4 pt-4">
         <p className="px-1 pb-1 text-sm text-ink-soft">
@@ -123,6 +153,10 @@ export default function NewCoursePage() {
         )}
 
         <SectionCard title="기본 정보">
+          <Field id="thumbnail" label="대표 사진" error={errors.thumbnail}>
+            <ThumbnailPicker id="thumbnail" value={thumbnail} onChange={setThumbnail} />
+          </Field>
+
           <Field id="title" label="과정 이름" required hint="2~40자" error={errors.title}>
             <input id="title" value={values.title} onChange={(e) => set("title", e.target.value)} placeholder="예: ChatGPT 업무 자동화 입문" maxLength={50} className={inputClass} {...aria("title")} />
           </Field>
@@ -145,10 +179,6 @@ export default function NewCoursePage() {
                 </ChoiceChip>
               ))}
             </div>
-          </Field>
-
-          <Field id="thumbnail" label="대표 사진" hint="목록과 상세 위쪽에 보여요. 없으면 분야 그림이 보여요." error={errors.thumbnail}>
-            <ThumbnailPicker id="thumbnail" value={thumbnail} category={(values.category || null) as Category | null} onChange={setThumbnail} />
           </Field>
 
           <Field id="summary" label="한 줄 소개" required hint="목록에 보이는 짧은 소개예요. 5~60자" error={errors.summary}>
@@ -205,6 +235,7 @@ export default function NewCoursePage() {
           </Field>
         </SectionCard>
 
+        {!editing && (
         <div id="cohorts-section" tabIndex={-1} className="outline-none">
           <SectionCard title="기수 정보" action={<span className="text-xs text-ink-soft">1개 이상 · 나중에 더 추가할 수 있어요</span>}>
             {errors.cohorts && (
@@ -238,10 +269,11 @@ export default function NewCoursePage() {
             </button>
           </SectionCard>
         </div>
+        )}
 
         <BottomBar>
           <button type="submit" disabled={saving} className={primaryButton}>
-            {saving ? "등록하는 중…" : "과정 등록하기"}
+            {saving ? "저장하는 중…" : editing ? "수정 내용 저장" : "과정 등록하기"}
           </button>
         </BottomBar>
       </form>

@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { AdminBar, CategoryThumb, PreviewBar, Chip, FlashToast, Skeleton, SlowServerHint, StatusScreen, primaryButton, type Mode } from "@/components/ui";
+import { AdminBar, CategoryThumb, PreviewBar, FlashToast, Skeleton, SlowServerHint, StatusScreen, primaryButton, type Mode } from "@/components/ui";
 import { courseGroup, listCourses, openCohorts, type CourseGroup } from "@/lib/api";
-import { cohortStatusLabel, formatPrice, formatRange, weeksLabel } from "@/lib/format";
+import { cohortStatusLabel, formatDot, formatPrice, weeksLabel } from "@/lib/format";
 import type { CourseWithCohorts } from "@/lib/types";
 
 type State = { status: "loading" } | { status: "error" } | { status: "ready"; courses: CourseWithCohorts[] };
@@ -59,14 +59,14 @@ export function CourseList({ mode }: { mode: Mode }) {
 
       {state.status === "loading" && <SlowServerHint />}
       {state.status === "loading" && (
-        <ul className="mt-6 space-y-4 px-5" aria-busy="true" aria-label="과정을 불러오는 중">
+        <ul className="mt-6 space-y-2.5 px-5" aria-busy="true" aria-label="과정을 불러오는 중">
           {Array.from({ length: 3 }).map((_, i) => (
-            <li key={i} className="overflow-hidden rounded-3xl bg-white">
-              <Skeleton className="h-32 w-full rounded-none" />
-              <div className="space-y-2 p-4">
-                <Skeleton className="h-4 w-48" />
-                <Skeleton className="h-3 w-40" />
-                <Skeleton className="h-5 w-24" />
+            <li key={i} className="flex gap-3 rounded-2xl bg-white p-3">
+              <Skeleton className="h-[92px] w-[92px] rounded-xl" />
+              <div className="flex-1 space-y-2 py-1">
+                <Skeleton className="h-3 w-28" />
+                <Skeleton className="h-4 w-44" />
+                <Skeleton className="mt-4 h-3 w-36" />
               </div>
             </li>
           ))}
@@ -106,14 +106,14 @@ export function CourseList({ mode }: { mode: Mode }) {
           const items = state.courses.filter((c) => courseGroup(c) === g.key);
           if (items.length === 0) return null;
           return (
-            <section key={g.key} className="mt-8 px-5">
+            <section key={g.key} className="mt-6 px-5">
               <div className="mb-3">
                 <h2 className="text-lg font-bold">
                   {g.title} <span className="text-brand-600">{items.length}</span>
                 </h2>
                 <p className="text-[13px] text-ink-soft">{g.desc}</p>
               </div>
-              <ul className="space-y-4">
+              <ul className="space-y-2.5">
                 {items.map((c) => (
                   <li key={c.id}>
                     <CourseCard item={c} group={g.key} admin={admin} />
@@ -141,67 +141,64 @@ export function CourseList({ mode }: { mode: Mode }) {
   );
 }
 
+// 가로형 목록 카드: 사진을 왼쪽에 작게 두고, 결정에 필요한 정보(상태·개강·기간·수강료)만 담아 한 화면에 4~5개가 보이게 한다
 function CourseCard({ item, group, admin }: { item: CourseWithCohorts; group: CourseGroup; admin: boolean }) {
   const next = openCohorts(item)[0];
   const preparing = group === "preparing";
 
   return (
-    <div className="overflow-hidden rounded-3xl bg-white shadow-[0_1px_3px_rgba(24,27,43,0.06)]">
-    <Link
-      href={admin ? `/admin/courses/${item.id}` : `/courses/${item.id}`}
-      className={`block transition active:bg-surface ${preparing && !admin ? "opacity-70" : ""}`}
-    >
-      <div className="relative">
-        <CategoryThumb category={item.category} src={item.thumbnail} size="card" />
-        <div className="absolute top-3 left-3 flex gap-1.5">
-          {preparing ? (
-            <Badge tone="gray">준비 중</Badge>
-          ) : (
-            <>
-              <Badge tone={group === "closing" ? "red" : "green"}>{group === "closing" ? "마감 임박" : "모집 중"}</Badge>
-              {next && <Badge tone="dark">{cohortStatusLabel(next)}</Badge>}
-            </>
-          )}
-        </div>
-      </div>
-
-      <div className="p-4">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Chip>{item.category}</Chip>
-          <Chip tone="gray">{item.level}</Chip>
-          <Chip tone="gray">{item.format}</Chip>
-        </div>
-        <p className="mt-2 text-[17px] font-bold leading-snug">{item.title}</p>
-        <p className="mt-0.5 text-[14px] text-ink-soft">{item.summary}</p>
-
-        <div className="mt-3 flex items-end justify-between gap-3 border-t border-line pt-3">
-          <div className="min-w-0 text-[13px]">
-            {next ? (
-              <>
-                <p className="font-semibold">
-                  {next.cohortNo}기 · {formatRange(next.startDate, next.endDate)}
-                </p>
-                <p className="mt-0.5 truncate text-ink-soft">
-                  {weeksLabel(next.startDate, next.endDate)}
-                  {next.schedule && ` · ${next.schedule}`}
-                </p>
-              </>
+    <div className="overflow-hidden rounded-2xl bg-white shadow-[0_1px_3px_rgba(24,27,43,0.06)]">
+      <Link
+        href={admin ? `/admin/courses/${item.id}` : `/courses/${item.id}`}
+        className={`flex gap-3 p-3 transition active:bg-surface ${preparing && !admin ? "opacity-70" : ""}`}
+      >
+        <div className="relative h-[92px] w-[92px] shrink-0 overflow-hidden rounded-xl">
+          <CategoryThumb category={item.category} src={item.thumbnail} size="fill" />
+          <div className="absolute top-1.5 left-1.5">
+            {preparing ? (
+              <Badge tone="gray">준비 중</Badge>
             ) : (
-              <p className="text-ink-soft">다음 기수 일정 준비 중</p>
+              <Badge tone={group === "closing" ? "red" : "green"}>{group === "closing" ? "마감 임박" : "모집 중"}</Badge>
             )}
           </div>
-          <p className="shrink-0 text-[17px] font-extrabold text-brand-700">{formatPrice(item.price)}</p>
         </div>
-      </div>
-    </Link>
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <p className="truncate text-[12px] text-ink-soft">
+            {item.category} · {item.level} · {item.format}
+          </p>
+          <p className="mt-0.5 line-clamp-2 text-[15px] font-bold leading-snug">{item.title}</p>
+          <div className="mt-auto flex items-end justify-between gap-2 pt-1.5">
+            <p className="min-w-0 truncate text-[12px]">
+              {next ? (
+                <>
+                  <span className={`font-semibold ${group === "closing" ? "text-[#c23b3b]" : "text-moss-600"}`}>{cohortStatusLabel(next)}</span>
+                  <span className="text-ink-soft">
+                    {" "}
+                    · {formatDot(next.startDate)} · {weeksLabel(next.startDate, next.endDate)}
+                  </span>
+                </>
+              ) : (
+                <span className="text-ink-soft">다음 기수 준비 중</span>
+              )}
+            </p>
+            <p className="shrink-0 text-[15px] font-extrabold text-brand-700">{formatPrice(item.price)}</p>
+          </div>
+        </div>
+      </Link>
       {admin && (
-        <div className="flex items-center justify-between border-t border-line bg-surface/60 px-4 py-2.5">
-          <p className="text-[13px] text-ink-soft">
+        <div className="flex items-center justify-between border-t border-line bg-surface/60 px-3 py-2">
+          <p className="text-[12px] text-ink-soft">
             기수 {item.cohorts.length}개 · 모집 중 {openCohorts(item).length}개
           </p>
-          <Link href={`/admin/courses/${item.id}/cohorts/new`} className="rounded-lg bg-brand-50 px-3 py-1.5 text-[13px] font-semibold text-brand-700 active:bg-brand-100">
-            + 기수 추가
-          </Link>
+          <div className="flex gap-1.5">
+            <Link href={`/admin/courses/${item.id}/edit`} className="rounded-lg border border-line bg-white px-3 py-1.5 text-[12px] font-semibold text-ink active:bg-surface">
+              수정
+            </Link>
+            <Link href={`/admin/courses/${item.id}/cohorts/new`} className="rounded-lg bg-brand-50 px-3 py-1.5 text-[12px] font-semibold text-brand-700 active:bg-brand-100">
+              + 기수 추가
+            </Link>
+          </div>
         </div>
       )}
     </div>
@@ -215,5 +212,5 @@ function Badge({ tone, children }: { tone: "green" | "red" | "dark" | "gray"; ch
     dark: "bg-ink/80 text-white",
     gray: "bg-white/90 text-ink-soft",
   };
-  return <span className={`rounded-md px-2 py-1 text-[12px] font-bold backdrop-blur ${tones[tone]}`}>{children}</span>;
+  return <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-bold backdrop-blur ${tones[tone]}`}>{children}</span>;
 }
