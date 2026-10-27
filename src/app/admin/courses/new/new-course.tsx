@@ -3,10 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { CohortFields } from "@/components/cohort-fields";
+import { useFormErrors } from "@/components/use-form-errors";
 import { BottomBar, ErrorSummary, Field, SectionCard, TopBar, inputClass, primaryButton, secondaryButton, setFlash } from "@/components/ui";
 import { ApiError, createCourse } from "@/lib/api";
 import { CATEGORIES, FORMATS, LEVELS, type Category, type Format, type Level } from "@/lib/types";
-import { validateCourse, type CohortFormValues, type CourseFormValues, type FieldErrors } from "@/lib/validation";
+import { validateCourse, type CohortFormValues, type CourseFormValues } from "@/lib/validation";
 
 let keySeq = 0;
 const newCohort = (capacity = ""): CohortFormValues => ({ key: `c${++keySeq}`, startDate: "", endDate: "", capacity, schedule: "" });
@@ -33,13 +34,18 @@ type TextKey = Exclude<keyof CourseFormValues, "cohorts">;
 export default function NewCoursePage() {
   const router = useRouter();
   const [values, setValues] = useState<CourseFormValues>(INITIAL);
-  const [errors, setErrors] = useState<FieldErrors>({});
-  const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  // 오류 키(cohorts.0.startDate)와 칸 id(cohorts-0-startDate)를 서로 바꾼다
+  const form = useFormErrors(values, validateCourse, {
+    idToKey: (id) => (id === "cohorts-section" ? "cohorts" : id.replace(/^cohorts-(\d+)-/, "cohorts.$1.")),
+    keyToId: (key) => (key === "cohorts" ? "cohorts-section" : key.replaceAll(".", "-")),
+  });
+  const errors = form.errors;
 
   const update = (next: CourseFormValues) => {
     setValues(next);
-    if (submitted) setErrors(validateCourse(next));
+    form.clearServerErrors();
   };
   const set = (key: TextKey, value: string) => update({ ...values, [key]: value });
 
@@ -57,17 +63,8 @@ export default function NewCoursePage() {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    const found = validateCourse(values);
-    setErrors(found);
-
-    const first = Object.keys(found)[0];
-    if (first) {
-      const el = document.getElementById(first === "cohorts" ? "cohorts-section" : first.replaceAll(".", "-"));
-      el?.scrollIntoView({ behavior: "smooth", block: "center" });
-      el?.focus({ preventScroll: true });
-      return;
-    }
+    setFormError(null);
+    if (!form.trySubmit()) return;
 
     setSaving(true);
     try {
@@ -97,8 +94,8 @@ export default function NewCoursePage() {
     } catch (e) {
       setSaving(false);
       // 백엔드가 거절한 경우 칸별 안내를, 연결 문제면 전체 안내를 보여 준다
-      if (e instanceof ApiError && Object.keys(e.errors).length > 0) setErrors(e.errors);
-      else setErrors({ form: e instanceof ApiError ? e.message : "저장하지 못했어요. 잠시 뒤 다시 시도해 주세요." });
+      if (e instanceof ApiError && Object.keys(e.errors).length > 0) form.showServerErrors(e.errors);
+      else setFormError(e instanceof ApiError ? e.message : "저장하지 못했어요. 잠시 뒤 다시 시도해 주세요.");
     }
   };
 
@@ -106,21 +103,29 @@ export default function NewCoursePage() {
     "aria-invalid": Boolean(errors[key]),
     "aria-describedby": errors[key] ? `${key}-error` : undefined,
   });
-  const errorCount = Object.keys(errors).filter((k) => k !== "form").length;
 
   return (
     <main>
       <TopBar title="과정 등록" backHref="/admin" />
 
-      <form noValidate onSubmit={onSubmit} className="space-y-3 px-4 pt-4">
+      <form noValidate onSubmit={onSubmit} onBlur={form.onBlur} className="space-y-3 px-4 pt-4">
         <p className="px-1 pb-1 text-sm text-ink-soft">
           <span className="text-brand-600">*</span> 표시는 꼭 채워 주세요.
         </p>
 
-        <ErrorSummary count={errorCount} />
-        {errors.form && (
+        <ErrorSummary
+          errors={errors}
+          focusSignal={form.focusSignal}
+          onSelect={form.goTo}
+          // 같은 문구가 기본 정원과 기수 정원에 함께 나올 수 있어 기수 오류에는 몇 기인지 붙인다
+          prefixFor={(key) => {
+            const m = key.match(/^cohorts\.(\d+)\./);
+            return m ? `${Number(m[1]) + 1}기 · ` : "";
+          }}
+        />
+        {formError && (
           <p role="alert" className="rounded-2xl bg-[#fff4f4] px-4 py-3 text-sm text-[#a83232]">
-            {errors.form}
+            {formError}
           </p>
         )}
 
@@ -204,7 +209,7 @@ export default function NewCoursePage() {
         </SectionCard>
 
         <div id="cohorts-section" tabIndex={-1} className="outline-none">
-          <SectionCard title="모집 기수" action={<span className="text-xs text-ink-soft">1개 이상 · 나중에 더 추가할 수 있어요</span>}>
+          <SectionCard title="기수 정보" action={<span className="text-xs text-ink-soft">1개 이상 · 나중에 더 추가할 수 있어요</span>}>
             {errors.cohorts && (
               <p role="alert" className="text-[13px] text-[#c23b3b]">
                 ⚠︎ {errors.cohorts}
@@ -232,7 +237,7 @@ export default function NewCoursePage() {
               </div>
             ))}
             <button type="button" onClick={addCohort} className={`${secondaryButton} w-full border-dashed`}>
-              + 기수 하나 더
+              + 기수 추가
             </button>
           </SectionCard>
         </div>

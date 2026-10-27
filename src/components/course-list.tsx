@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { AdminBar, CategoryThumb, Chip, FlashToast, Skeleton, SlowServerHint, StatusScreen, primaryButton, type Mode } from "@/components/ui";
+import { AdminBar, CategoryThumb, PreviewBar, Chip, FlashToast, Skeleton, SlowServerHint, StatusScreen, primaryButton, type Mode } from "@/components/ui";
 import { courseGroup, listCourses, openCohorts, type CourseGroup } from "@/lib/api";
 import { cohortStatusLabel, formatPrice, formatRange, weeksLabel } from "@/lib/format";
 import type { CourseWithCohorts } from "@/lib/types";
@@ -36,6 +36,7 @@ export function CourseList({ mode }: { mode: Mode }) {
   return (
     <main className={admin ? "pb-32" : "pb-10"}>
       <FlashToast />
+      {!admin && <PreviewBar adminHref="/admin" />}
       {admin ? (
         <AdminBar userHref="/" />
       ) : (

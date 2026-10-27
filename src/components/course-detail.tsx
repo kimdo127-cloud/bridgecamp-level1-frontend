@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { AdminBar, BottomBar, CategoryThumb, Chip, FlashToast, HomeLink, Skeleton, StatusScreen, TopBar, primaryButton, type Mode } from "@/components/ui";
+import { AdminBar, BottomBar, PreviewBar, CategoryThumb, Chip, FlashToast, HomeLink, Skeleton, StatusScreen, TopBar, primaryButton, type Mode } from "@/components/ui";
 import { getCourse, openCohorts } from "@/lib/api";
 import { COMMON_FAQ } from "@/lib/faq";
 import { cohortStatus, cohortStatusLabel, formatDate, formatPrice, formatRange, weeksLabel } from "@/lib/format";
@@ -92,9 +92,11 @@ function CourseDetail({ c, mode }: { c: CourseWithCohorts; mode: Mode }) {
       {admin ? (
         <>
           <AdminBar userHref={`/courses/${c.id}`} backHref="/admin" />
-          <p className="bg-ink/5 px-5 py-2.5 text-[13px] text-ink-soft">수강 희망자에게는 이 화면이 그대로 보여요. 운영 모드에서만 기수 추가 버튼이 보여요.</p>
+          <p className="bg-ink/5 px-5 py-2.5 text-[13px] text-ink-soft">수강 희망자에게는 기수 추가 버튼을 뺀 이 화면이 그대로 보여요.</p>
         </>
       ) : (
+        <>
+        <PreviewBar adminHref={`/admin/courses/${c.id}`} />
         <TopBar
         title={c.title}
         right={
@@ -105,6 +107,7 @@ function CourseDetail({ c, mode }: { c: CourseWithCohorts; mode: Mode }) {
           </button>
         }
       />
+        </>
       )}
       {toast && (
         <div role="status" className="fixed inset-x-0 top-20 z-50 mx-auto w-fit rounded-full bg-ink px-5 py-3 text-sm text-white shadow-lg">

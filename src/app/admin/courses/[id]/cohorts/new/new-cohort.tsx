@@ -3,11 +3,12 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { CohortFields } from "@/components/cohort-fields";
+import { useFormErrors } from "@/components/use-form-errors";
 import { BottomBar, CategoryThumb, ErrorSummary, HomeLink, SectionCard, Skeleton, StatusScreen, TopBar, primaryButton, setFlash } from "@/components/ui";
 import { ApiError, addCohort, getCourse } from "@/lib/api";
 import { cohortStatusLabel, formatShortDate, weeksLabel } from "@/lib/format";
 import type { CourseWithCohorts } from "@/lib/types";
-import { validateCohort, type CohortFormValues, type FieldErrors } from "@/lib/validation";
+import { validateCohort, type CohortFormValues } from "@/lib/validation";
 
 type Values = Omit<CohortFormValues, "key">;
 type State = { status: "loading" } | { status: "missing" } | { status: "ready"; item: CourseWithCohorts };
@@ -17,9 +18,13 @@ export default function NewCohortPage() {
   const router = useRouter();
   const [state, setState] = useState<State>({ status: "loading" });
   const [values, setValues] = useState<Values>({ startDate: "", endDate: "", capacity: "", schedule: "" });
-  const [errors, setErrors] = useState<FieldErrors>({});
-  const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const form = useFormErrors(values, validateCohort, {
+    idToKey: (id) => id.replace(/^cohort-/, ""),
+    keyToId: (key) => `cohort-${key}`,
+  });
+  const errors = form.errors;
 
   useEffect(() => {
     getCourse(Number(id))
@@ -59,19 +64,13 @@ export default function NewCohortPage() {
   const change = (patch: Partial<Values>) => {
     const next = { ...values, ...patch };
     setValues(next);
-    if (submitted) setErrors(validateCohort(next));
+    form.clearServerErrors();
   };
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    const found = validateCohort(values);
-    setErrors(found);
-    const first = Object.keys(found)[0];
-    if (first) {
-      document.getElementById(`cohort-${first}`)?.focus();
-      return;
-    }
+    setFormError(null);
+    if (!form.trySubmit()) return;
     setSaving(true);
     try {
       const added = await addCohort(c.id, { startDate: values.startDate, endDate: values.endDate, capacity: Number(values.capacity), schedule: values.schedule.trim() });
@@ -80,8 +79,8 @@ export default function NewCohortPage() {
     } catch (e) {
       setSaving(false);
       // 백엔드가 거절한 경우 칸별 안내를, 연결 문제면 전체 안내를 보여 준다
-      if (e instanceof ApiError && Object.keys(e.errors).length > 0) setErrors(e.errors);
-      else setErrors({ form: e instanceof ApiError ? e.message : "저장하지 못했어요. 잠시 뒤 다시 시도해 주세요." });
+      if (e instanceof ApiError && Object.keys(e.errors).length > 0) form.showServerErrors(e.errors);
+      else setFormError(e instanceof ApiError ? e.message : "저장하지 못했어요. 잠시 뒤 다시 시도해 주세요.");
     }
   };
 
@@ -90,7 +89,7 @@ export default function NewCohortPage() {
   return (
     <main>
       <TopBar title="기수 추가" backHref={`/admin/courses/${id}`} />
-      <form noValidate onSubmit={onSubmit} className="space-y-3 px-4 pt-4">
+      <form noValidate onSubmit={onSubmit} onBlur={form.onBlur} className="space-y-3 px-4 pt-4">
         <div className="flex items-center gap-3 rounded-3xl bg-white p-3">
           <CategoryThumb category={c.category} size="sm" />
           <div className="min-w-0">
@@ -101,10 +100,10 @@ export default function NewCohortPage() {
           </div>
         </div>
 
-        <ErrorSummary count={Object.keys(errors).filter((k) => k !== "form").length} />
-        {errors.form && (
+        <ErrorSummary errors={errors} focusSignal={form.focusSignal} onSelect={form.goTo} />
+        {formError && (
           <p role="alert" className="rounded-2xl bg-[#fff4f4] px-4 py-3 text-sm text-[#a83232]">
-            {errors.form}
+            {formError}
           </p>
         )}
 

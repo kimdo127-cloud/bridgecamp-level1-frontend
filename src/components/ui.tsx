@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Category } from "@/lib/types";
 
 const THUMBS: Record<Category, { emoji: string; bg: string }> = {
@@ -73,10 +73,52 @@ export function AdminBar({ userHref, backHref }: { userHref: string; backHref?: 
       )}
       <p className="text-[16px] font-bold">브릿지캠프</p>
       <span className="ml-1.5 rounded-md bg-white/15 px-2 py-0.5 text-[12px] font-semibold">운영 모드</span>
-      <Link href={userHref} className="ml-auto px-3 py-2 text-[13px] font-medium text-white/80 active:text-white">
-        사용자 화면 보기
+      <Link href={userHref} onClick={startPreview} className="ml-auto px-3 py-2 text-[13px] font-medium text-white/80 active:text-white">
+        사용자 화면 미리보기
       </Link>
     </header>
+  );
+}
+
+// 운영 모드에서 사용자 화면으로 넘어간 동안만 상단에 미리보기 바를 띄운다 (Shopify preview bar, Blackboard Student Preview).
+// 탭 단위 저장소(sessionStorage)를 써서 일반 사용자나 공유된 링크에는 바가 보이지 않는다.
+const PREVIEW_KEY = "bridgecamp:preview";
+
+function startPreview() {
+  try {
+    sessionStorage.setItem(PREVIEW_KEY, "1");
+  } catch {}
+}
+
+export function PreviewBar({ adminHref }: { adminHref: string }) {
+  const router = useRouter();
+  const [on, setOn] = useState(false);
+
+  useEffect(() => {
+    let active = false;
+    try {
+      active = sessionStorage.getItem(PREVIEW_KEY) === "1";
+    } catch {}
+    const t = setTimeout(() => setOn(active), 0);
+    return () => clearTimeout(t);
+  }, []);
+
+  if (!on) return null;
+  const close = () => {
+    try {
+      sessionStorage.removeItem(PREVIEW_KEY);
+    } catch {}
+    router.push(adminHref);
+  };
+  return (
+    <div className="relative flex items-center justify-between gap-2 bg-ink px-4 py-2.5 text-[13px] text-white">
+      <p>
+        <b>운영자 미리보기</b> <span className="text-white/70">· 수강 희망자에게 보이는 화면</span>
+      </p>
+      <button type="button" onClick={close} className="shrink-0 rounded-lg bg-white/15 px-3 py-1.5 font-semibold active:bg-white/25">
+        미리보기 닫기
+      </button>
+    </div>
   );
 }
 
@@ -126,12 +168,43 @@ export function Field({
   );
 }
 
-export function ErrorSummary({ count }: { count: number }) {
-  if (count === 0) return null;
+// 제출에 실패하면 맨 위에 오류 목록을 보여 주고, 항목을 누르면 그 칸으로 이동한다 (GOV.UK error summary)
+export function ErrorSummary({
+  errors,
+  focusSignal,
+  onSelect,
+  prefixFor,
+}: {
+  errors: Record<string, string>;
+  focusSignal: number;
+  onSelect: (key: string) => void;
+  prefixFor?: (key: string) => string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const entries = Object.entries(errors).filter(([k]) => k !== "form");
+
+  // 제출할 때마다 요약으로 포커스를 옮겨 화면 읽기 프로그램과 스크롤이 요약부터 시작하게 한다
+  useEffect(() => {
+    if (focusSignal > 0 && ref.current) {
+      ref.current.focus();
+      ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [focusSignal]);
+
+  if (entries.length === 0) return null;
   return (
-    <div role="alert" className="rounded-2xl border border-[#f2c6c6] bg-[#fff4f4] px-4 py-3 text-sm text-[#a83232]">
-      <p className="font-semibold">입력한 내용을 다시 확인해 주세요.</p>
-      <p className="mt-0.5">비어 있거나 형식이 맞지 않는 칸이 {count}개 있어요. 빨간 안내를 확인해 주세요.</p>
+    <div ref={ref} tabIndex={-1} role="alert" className="scroll-mt-20 rounded-2xl border-2 border-[#e5484d] bg-[#fff4f4] px-4 py-3 text-sm text-[#a83232] outline-none">
+      <p className="font-bold">입력한 내용을 다시 확인해 주세요 ({entries.length}개)</p>
+      <ul className="mt-2 space-y-1.5">
+        {entries.map(([key, message]) => (
+          <li key={key}>
+            <button type="button" onClick={() => onSelect(key)} className="text-left underline underline-offset-2 active:opacity-70">
+              {prefixFor?.(key)}
+              {message}
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
