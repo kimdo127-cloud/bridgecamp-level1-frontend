@@ -50,12 +50,12 @@ export function CourseList({ mode }: { mode: Mode }) {
       </header>
       )}
 
-      <section className="px-5 pt-5">
-        <h1 className="text-[22px] font-bold leading-snug">{admin ? "과정 관리" : "어떤 과정을 찾고 계세요?"}</h1>
-        <p className="mt-1 text-sm text-ink-soft">
-          {admin ? "수강 희망자에게 보이는 화면 그대로예요. 과정을 등록하거나 기수를 추가해 보세요." : "개강일, 기간, 수업 방식, 수강료를 한눈에 비교해 보세요."}
-        </p>
-      </section>
+      {!admin && (
+        <section className="px-5 pt-5">
+          <h1 className="text-[22px] font-bold leading-snug">어떤 과정을 찾고 계세요?</h1>
+          <p className="mt-1 text-sm text-ink-soft">개강일, 기간, 수업 방식, 수강료를 한눈에 비교해 보세요.</p>
+        </section>
+      )}
 
       {state.status === "loading" && <SlowServerHint />}
       {state.status === "loading" && (
