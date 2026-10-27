@@ -31,35 +31,46 @@ export function ThumbnailPicker({ id, value, onChange }: { id: string; value: st
     <div className="space-y-2">
       <input ref={inputRef} id={id} type="file" accept="image/jpeg,image/png,image/webp" onChange={pick} className="sr-only" />
 
-      {value ? (
-        <div className="relative aspect-[16/9] overflow-hidden rounded-2xl border border-line bg-surface">
-          {/* eslint-disable-next-line @next/next/no-img-element -- 화면에서 줄인 data URL 미리 보기 */}
-          <img src={value} alt="대표 사진 미리 보기" className="h-full w-full object-cover" />
-          <div className="absolute right-2 bottom-2 flex gap-1.5">
-            <button type="button" onClick={open} disabled={busy} className="h-9 rounded-lg bg-white/95 px-3 text-[13px] font-semibold text-ink shadow-sm active:bg-white disabled:opacity-50">
-              {busy ? "바꾸는 중…" : "변경"}
-            </button>
-            <button type="button" onClick={() => onChange(null)} disabled={busy} className="h-9 rounded-lg bg-ink/85 px-3 text-[13px] font-semibold text-white shadow-sm active:bg-ink disabled:opacity-50">
-              삭제
-            </button>
-          </div>
-        </div>
-      ) : (
+      <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={open}
           disabled={busy}
-          className="flex aspect-[16/9] w-full flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-line bg-surface text-ink-soft transition active:bg-brand-50 disabled:opacity-60"
+          aria-label={value ? "대표 사진 변경" : "대표 사진 추가"}
+          className={`flex h-[92px] w-[92px] shrink-0 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-xl transition disabled:opacity-60 ${
+            value ? "border border-line" : "border-2 border-dashed border-line bg-surface active:bg-brand-50"
+          }`}
         >
-          <span className="text-2xl" aria-hidden>
-            📷
-          </span>
-          <span className="text-[15px] font-semibold text-ink">{busy ? "사진 줄이는 중…" : "대표 사진 추가"}</span>
-          <span className="text-[12px]">가로 사진 권장 · JPG, PNG, WEBP</span>
+          {value ? (
+            // eslint-disable-next-line @next/next/no-img-element -- 화면에서 줄인 data URL 미리 보기
+            <img src={value} alt="대표 사진 미리 보기" className="h-full w-full object-cover" />
+          ) : (
+            <>
+              <span className="text-xl" aria-hidden>
+                📷
+              </span>
+              <span className="text-[12px] font-semibold text-ink">{busy ? "줄이는 중…" : "사진 추가"}</span>
+            </>
+          )}
         </button>
-      )}
-
-      <p className="text-[13px] text-ink-soft">사진을 올리지 않으면 분야 기본 그림이 보여요.</p>
+        <div className="min-w-0 space-y-2">
+          <p className="text-[12px] leading-relaxed text-ink-soft">
+            가로 사진 권장 · JPG, PNG, WEBP
+            <br />
+            올리지 않으면 분야 기본 그림이 보여요.
+          </p>
+          {value && (
+            <div className="flex gap-1.5">
+              <button type="button" onClick={open} disabled={busy} className="h-8 rounded-lg border border-line bg-white px-3 text-[12px] font-semibold text-ink active:bg-surface disabled:opacity-50">
+                {busy ? "바꾸는 중…" : "변경"}
+              </button>
+              <button type="button" onClick={() => onChange(null)} disabled={busy} className="h-8 rounded-lg px-3 text-[12px] font-semibold text-ink-soft active:bg-surface disabled:opacity-50">
+                삭제
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
       {error && (
         <p role="alert" className="text-[13px] text-[#c23b3b]">
           ⚠︎ {error}

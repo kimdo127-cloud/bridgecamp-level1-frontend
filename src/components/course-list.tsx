@@ -186,21 +186,6 @@ function CourseCard({ item, group, admin }: { item: CourseWithCohorts; group: Co
           </div>
         </div>
       </Link>
-      {admin && (
-        <div className="flex items-center justify-between border-t border-line bg-surface/60 px-3 py-2">
-          <p className="text-[12px] text-ink-soft">
-            기수 {item.cohorts.length}개 · 모집 중 {openCohorts(item).length}개
-          </p>
-          <div className="flex gap-1.5">
-            <Link href={`/admin/courses/${item.id}/edit`} className="rounded-lg border border-line bg-white px-3 py-1.5 text-[12px] font-semibold text-ink active:bg-surface">
-              수정
-            </Link>
-            <Link href={`/admin/courses/${item.id}/cohorts/new`} className="rounded-lg bg-brand-50 px-3 py-1.5 text-[12px] font-semibold text-brand-700 active:bg-brand-100">
-              + 기수 추가
-            </Link>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
