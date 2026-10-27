@@ -67,6 +67,11 @@ export async function createCourse(input: CourseInput): Promise<CourseWithCohort
   return request<CourseWithCohorts>("/courses", { method: "POST", body: JSON.stringify(input) });
 }
 
+// 대표 사진 바꾸기 (null이면 사진을 빼고 분야 그림으로)
+export async function updateThumbnail(courseId: number, thumbnail: string | null): Promise<CourseWithCohorts> {
+  return request<CourseWithCohorts>(`/courses/${courseId}/thumbnail`, { method: "PATCH", body: JSON.stringify({ thumbnail }) });
+}
+
 // 기수 번호는 백엔드가 그 과정의 마지막 기수 + 1로 붙여서 돌려준다
 export async function addCohort(courseId: number, input: CohortInput): Promise<Cohort> {
   return request<Cohort>(`/courses/${courseId}/cohorts`, { method: "POST", body: JSON.stringify(input) });

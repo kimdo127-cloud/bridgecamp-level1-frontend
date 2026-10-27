@@ -20,9 +20,18 @@ const THUMB_SIZES = {
   lg: "h-48 w-full text-7xl",
 };
 
-export function CategoryThumb({ category, size = "md" }: { category: Category; size?: keyof typeof THUMB_SIZES }) {
+export function CategoryThumb({ category, src, size = "md" }: { category: Category; src?: string | null; size?: keyof typeof THUMB_SIZES }) {
   const t = THUMBS[category];
   const box = THUMB_SIZES[size];
+  // 운영자가 올린 대표 사진이 있으면 사진을, 없으면 분야 그림을 보여 준다
+  if (src) {
+    return (
+      <div className={`overflow-hidden bg-surface ${box}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- DB에 저장된 data URL이라 이미지 최적화 대상이 아님 */}
+        <img src={src} alt="" className="h-full w-full object-cover" />
+      </div>
+    );
+  }
   return (
     <div aria-hidden className={`flex items-center justify-center bg-gradient-to-br ${t.bg} ${box}`}>
       <span className="drop-shadow-sm">{t.emoji}</span>

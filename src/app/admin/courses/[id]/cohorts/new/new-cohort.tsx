@@ -91,7 +91,7 @@ export default function NewCohortPage() {
       <TopBar title="기수 추가" backHref={`/admin/courses/${id}`} />
       <form noValidate onSubmit={onSubmit} onBlur={form.onBlur} className="space-y-3 px-4 pt-4">
         <div className="flex items-center gap-3 rounded-3xl bg-white p-3">
-          <CategoryThumb category={c.category} size="sm" />
+          <CategoryThumb category={c.category} src={c.thumbnail} size="sm" />
           <div className="min-w-0">
             <p className="truncate text-[15px] font-bold">{c.title}</p>
             <p className="text-[13px] text-ink-soft">

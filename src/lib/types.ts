@@ -23,6 +23,7 @@ export interface Course {
   recommendedFor: string; // 한 줄에 하나씩
   curriculum: string; // 한 줄에 한 주차씩
   preparation: string;
+  thumbnail: string | null; // 대표 사진 data URL. 없으면 분야 그림
   createdAt: string;
 }
 

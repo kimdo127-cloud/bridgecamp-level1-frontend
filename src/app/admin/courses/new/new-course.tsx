@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { CohortFields } from "@/components/cohort-fields";
+import { ThumbnailPicker } from "@/components/thumbnail-picker";
 import { useFormErrors } from "@/components/use-form-errors";
 import { BottomBar, Field, SectionCard, TopBar, inputClass, primaryButton, secondaryButton, setFlash } from "@/components/ui";
 import { ApiError, createCourse } from "@/lib/api";
@@ -36,6 +37,7 @@ export default function NewCoursePage() {
   const [values, setValues] = useState<CourseFormValues>(INITIAL);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [thumbnail, setThumbnail] = useState<string | null>(null);
   // 오류 키(cohorts.0.startDate)와 칸 id(cohorts-0-startDate)를 서로 바꾼다
   const form = useFormErrors(values, validateCourse, {
     idToKey: (id) => (id === "cohorts-section" ? "cohorts" : id.replace(/^cohorts-(\d+)-/, "cohorts.$1.")),
@@ -82,6 +84,7 @@ export default function NewCoursePage() {
         recommendedFor: values.recommendedFor.trim(),
         curriculum: values.curriculum.trim(),
         preparation: values.preparation.trim(),
+        thumbnail,
         cohorts: values.cohorts.map((c) => ({
           startDate: c.startDate,
           endDate: c.endDate,
@@ -142,6 +145,10 @@ export default function NewCoursePage() {
                 </ChoiceChip>
               ))}
             </div>
+          </Field>
+
+          <Field id="thumbnail" label="대표 사진" hint="목록과 상세 위쪽에 보여요. 없으면 분야 그림이 보여요." error={errors.thumbnail}>
+            <ThumbnailPicker id="thumbnail" value={thumbnail} category={(values.category || null) as Category | null} onChange={setThumbnail} />
           </Field>
 
           <Field id="summary" label="한 줄 소개" required hint="목록에 보이는 짧은 소개예요. 5~60자" error={errors.summary}>

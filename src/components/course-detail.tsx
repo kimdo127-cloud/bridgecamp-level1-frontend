@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { AdminBar, BottomBar, PreviewBar, CategoryThumb, Chip, FlashToast, HomeLink, Skeleton, StatusScreen, TopBar, primaryButton, type Mode } from "@/components/ui";
-import { getCourse, openCohorts } from "@/lib/api";
+import { ThumbnailEditor } from "@/components/thumbnail-picker";
+import { courseGroup, getCourse, openCohorts } from "@/lib/api";
 import { COMMON_FAQ } from "@/lib/faq";
 import { cohortStatus, cohortStatusLabel, formatDate, formatPrice, formatRange, weeksLabel } from "@/lib/format";
 import { lines, type CourseWithCohorts } from "@/lib/types";
@@ -51,6 +52,12 @@ function CourseDetail({ c, mode }: { c: CourseWithCohorts; mode: Mode }) {
   const cohorts = [...c.cohorts].reverse();
   const [active, setActive] = useState("intro");
   const [toast, setToast] = useState<string | null>(null);
+  const [thumbnail, setThumbnail] = useState(c.thumbnail);
+
+  const showToast = (message: string) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 2000);
+  };
 
   // 스크롤 위치에 맞춰 상단 탭 강조
   useEffect(() => {
@@ -116,12 +123,32 @@ function CourseDetail({ c, mode }: { c: CourseWithCohorts; mode: Mode }) {
       )}
 
       {/* 히어로 */}
-      <CategoryThumb category={c.category} size="lg" />
+      <div className="relative">
+        <CategoryThumb category={c.category} src={thumbnail} size="lg" />
+        {admin && (
+          <ThumbnailEditor
+            courseId={c.id}
+            value={thumbnail}
+            onSaved={(next, message) => {
+              setThumbnail(next);
+              showToast(message);
+            }}
+          />
+        )}
+      </div>
       <section className="bg-white px-5 pt-5 pb-6">
         <div className="flex flex-wrap gap-1.5">
           <Chip>{c.category}</Chip>
           <Chip tone="gray">{c.level}</Chip>
-          {next ? <Chip tone="moss">모집 중 · {cohortStatusLabel(next)}</Chip> : <Chip tone="gray">다음 기수 준비 중</Chip>}
+          {next ? (
+            courseGroup(c) === "closing" ? (
+              <span className="inline-flex items-center rounded-full bg-[#fde8e8] px-2 py-0.5 text-xs font-semibold text-[#c23b3b]">마감 임박 · {cohortStatusLabel(next)}</span>
+            ) : (
+              <Chip tone="moss">모집 중 · {cohortStatusLabel(next)}</Chip>
+            )
+          ) : (
+            <Chip tone="gray">다음 기수 준비 중</Chip>
+          )}
         </div>
         <h2 className="mt-3 text-[23px] font-bold leading-snug">{c.title}</h2>
         <p className="mt-1.5 text-[15px] leading-relaxed text-ink-soft">{c.summary}</p>

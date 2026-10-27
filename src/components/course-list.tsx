@@ -10,7 +10,7 @@ import type { CourseWithCohorts } from "@/lib/types";
 type State = { status: "loading" } | { status: "error" } | { status: "ready"; courses: CourseWithCohorts[] };
 
 const GROUPS: { key: CourseGroup; title: string; desc: string }[] = [
-  { key: "closing", title: "🔥 곧 개강해요", desc: "개강까지 일주일도 안 남았어요" },
+  { key: "closing", title: "🔥 마감 임박", desc: "개강까지 일주일도 안 남았어요" },
   { key: "open", title: "모집 중인 과정", desc: "개강이 가까운 순서예요" },
   { key: "preparing", title: "다음 기수 준비 중", desc: "일정이 정해지면 이곳에 안내해 드려요" },
 ];
@@ -152,13 +152,13 @@ function CourseCard({ item, group, admin }: { item: CourseWithCohorts; group: Co
       className={`block transition active:bg-surface ${preparing && !admin ? "opacity-70" : ""}`}
     >
       <div className="relative">
-        <CategoryThumb category={item.category} size="card" />
+        <CategoryThumb category={item.category} src={item.thumbnail} size="card" />
         <div className="absolute top-3 left-3 flex gap-1.5">
           {preparing ? (
             <Badge tone="gray">준비 중</Badge>
           ) : (
             <>
-              <Badge tone={group === "closing" ? "red" : "green"}>모집 중</Badge>
+              <Badge tone={group === "closing" ? "red" : "green"}>{group === "closing" ? "마감 임박" : "모집 중"}</Badge>
               {next && <Badge tone="dark">{cohortStatusLabel(next)}</Badge>}
             </>
           )}
