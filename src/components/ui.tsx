@@ -50,6 +50,36 @@ export function TopBar({ title, backHref, right }: { title?: string; backHref?: 
   );
 }
 
+export type Mode = "user" | "admin";
+
+// 운영 모드 상단 바: 사용자 화면과 구분되도록 어두운 색으로 표시한다
+export function AdminBar({ userHref, backHref }: { userHref: string; backHref?: string }) {
+  const router = useRouter();
+  return (
+    <header className="sticky top-0 z-20 flex h-14 items-center gap-1 bg-ink px-2 pt-[env(safe-area-inset-top)] text-white">
+      {backHref ? (
+        <button
+          type="button"
+          onClick={() => router.push(backHref)}
+          className="flex h-11 w-11 items-center justify-center rounded-full active:bg-white/10"
+          aria-label="뒤로 가기"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+      ) : (
+        <span className="w-3" />
+      )}
+      <p className="text-[16px] font-bold">브릿지캠프</p>
+      <span className="ml-1.5 rounded-md bg-white/15 px-2 py-0.5 text-[12px] font-semibold">운영 모드</span>
+      <Link href={userHref} className="ml-auto px-3 py-2 text-[13px] font-medium text-white/80 active:text-white">
+        사용자 화면 보기
+      </Link>
+    </header>
+  );
+}
+
 export function Chip({ children, tone = "brand" }: { children: ReactNode; tone?: "brand" | "moss" | "gray" }) {
   const tones = {
     brand: "bg-brand-100 text-brand-700",

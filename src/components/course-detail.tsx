@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { BottomBar, CategoryThumb, Chip, HomeLink, Skeleton, StatusScreen, TopBar, primaryButton } from "@/components/ui";
+import { AdminBar, BottomBar, CategoryThumb, Chip, FlashToast, HomeLink, Skeleton, StatusScreen, TopBar, primaryButton, type Mode } from "@/components/ui";
 import { getCourse, openCohorts } from "@/lib/api";
 import { COMMON_FAQ } from "@/lib/faq";
 import { cohortStatus, cohortStatusLabel, formatDate, formatPrice, formatRange, weeksLabel } from "@/lib/format";
@@ -17,7 +18,8 @@ const TABS = [
   { id: "faq", label: "FAQ" },
 ];
 
-export default function CourseDetailPage() {
+// 사용자 모드(/courses/:id)와 운영 모드(/admin/courses/:id)가 같은 상세를 쓰고, 운영 모드에만 관리 버튼이 붙는다
+export function CourseDetailPage({ mode }: { mode: Mode }) {
   const { id } = useParams<{ id: string }>();
   const [state, setState] = useState<State>({ status: "loading" });
 
@@ -32,15 +34,17 @@ export default function CourseDetailPage() {
   if (state.status === "missing")
     return (
       <main>
-        <TopBar />
+        {mode === "admin" ? <AdminBar userHref="/" backHref="/admin" /> : <TopBar />}
         <StatusScreen emoji="🔍" title="찾는 과정이 없어요" body={"주소가 잘못되었거나 모집이 끝난 과정이에요.\n목록에서 다시 골라 주세요."} action={<HomeLink />} />
       </main>
     );
 
-  return <CourseDetail c={state.item} />;
+  return <CourseDetail c={state.item} mode={mode} />;
 }
 
-function CourseDetail({ c }: { c: CourseWithCohorts }) {
+function CourseDetail({ c, mode }: { c: CourseWithCohorts; mode: Mode }) {
+  const admin = mode === "admin";
+  const addCohortHref = `/admin/courses/${c.id}/cohorts/new`;
   const next = openCohorts(c)[0];
   const curriculum = lines(c.curriculum);
   const recommended = lines(c.recommendedFor);
@@ -84,7 +88,14 @@ function CourseDetail({ c }: { c: CourseWithCohorts }) {
 
   return (
     <main>
-      <TopBar
+      <FlashToast />
+      {admin ? (
+        <>
+          <AdminBar userHref={`/courses/${c.id}`} backHref="/admin" />
+          <p className="bg-ink/5 px-5 py-2.5 text-[13px] text-ink-soft">수강 희망자에게는 이 화면이 그대로 보여요. 운영 모드에서만 기수 추가 버튼이 보여요.</p>
+        </>
+      ) : (
+        <TopBar
         title={c.title}
         right={
           <button type="button" onClick={share} aria-label="공유하기" className="flex h-11 w-11 items-center justify-center rounded-full active:bg-brand-50">
@@ -94,6 +105,7 @@ function CourseDetail({ c }: { c: CourseWithCohorts }) {
           </button>
         }
       />
+      )}
       {toast && (
         <div role="status" className="fixed inset-x-0 top-20 z-50 mx-auto w-fit rounded-full bg-ink px-5 py-3 text-sm text-white shadow-lg">
           {toast}
@@ -184,7 +196,17 @@ function CourseDetail({ c }: { c: CourseWithCohorts }) {
           )}
         </Section>
 
-        <Section id="schedule" title="기수 일정">
+        <Section
+          id="schedule"
+          title="기수 일정"
+          action={
+            admin && (
+              <Link href={addCohortHref} className="text-sm font-semibold text-brand-600 active:opacity-60">
+                + 기수 추가
+              </Link>
+            )
+          }
+        >
           {cohorts.length === 0 ? (
             <p className="rounded-2xl bg-surface px-4 py-6 text-center text-sm text-ink-soft">아직 열린 기수가 없어요.</p>
           ) : (
@@ -231,16 +253,28 @@ function CourseDetail({ c }: { c: CourseWithCohorts }) {
       </div>
 
       <BottomBar>
-        <div className="flex items-center gap-3">
-          <div className="min-w-0 shrink-0">
-            <p className="text-[12px] text-ink-soft">{next ? `${next.cohortNo}기 ${cohortStatusLabel(next)}` : "다음 기수 준비 중"}</p>
-            <p className="text-lg font-extrabold">{formatPrice(c.price)}</p>
+        {admin ? (
+          <div className="flex items-center gap-3">
+            <div className="min-w-0 shrink-0">
+              <p className="text-[12px] text-ink-soft">기수 {c.cohorts.length}개</p>
+              <p className="text-[15px] font-bold">{next ? `다음 ${next.cohortNo}기 ${cohortStatusLabel(next)}` : "모집 중 기수 없음"}</p>
+            </div>
+            <Link href={addCohortHref} className={primaryButton}>
+              + 기수 추가하기
+            </Link>
           </div>
-          {/* Level 1은 신청 기능이 없어 기수 일정으로 안내한다. Level 2에서 실제 수강 신청으로 바뀐다 */}
-          <button type="button" onClick={() => goTo("schedule")} disabled={!next} className={primaryButton}>
-            {next ? "수강 신청하기" : "모집 예정"}
-          </button>
-        </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <div className="min-w-0 shrink-0">
+              <p className="text-[12px] text-ink-soft">{next ? `${next.cohortNo}기 ${cohortStatusLabel(next)}` : "다음 기수 준비 중"}</p>
+              <p className="text-lg font-extrabold">{formatPrice(c.price)}</p>
+            </div>
+            {/* Level 1은 신청 기능이 없어 기수 일정으로 안내한다. Level 2에서 실제 수강 신청으로 바뀐다 */}
+            <button type="button" onClick={() => goTo("schedule")} disabled={!next} className={primaryButton}>
+              {next ? "수강 신청하기" : "모집 예정"}
+            </button>
+          </div>
+        )}
       </BottomBar>
     </main>
   );
@@ -255,10 +289,13 @@ function KeyRow({ label, value, strong }: { label: string; value: string; strong
   );
 }
 
-function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
+function Section({ id, title, action, children }: { id: string; title: string; action?: ReactNode; children: ReactNode }) {
   return (
     <section id={id} className="scroll-mt-28 bg-white px-5 py-7">
-      <h3 className="mb-4 text-lg font-bold">{title}</h3>
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-lg font-bold">{title}</h3>
+        {action}
+      </div>
       {children}
     </section>
   );

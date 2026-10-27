@@ -36,7 +36,7 @@ export default function NewCohortPage() {
   if (state.status === "loading")
     return (
       <main>
-        <TopBar title="기수 추가" backHref="/admin" />
+        <TopBar title="기수 추가" backHref={`/admin/courses/${id}`} />
         <div className="space-y-3 p-4">
           <Skeleton className="h-24 rounded-3xl" />
           <Skeleton className="h-64 rounded-3xl" />
@@ -47,7 +47,7 @@ export default function NewCohortPage() {
   if (state.status === "missing")
     return (
       <main>
-        <TopBar title="기수 추가" backHref="/admin" />
+        <TopBar title="기수 추가" backHref={`/admin/courses/${id}`} />
         <StatusScreen emoji="🔍" title="찾는 과정이 없어요" body="목록에서 과정을 다시 골라 주세요." action={<HomeLink />} />
       </main>
     );
@@ -76,7 +76,7 @@ export default function NewCohortPage() {
     try {
       const added = await addCohort(c.id, { startDate: values.startDate, endDate: values.endDate, capacity: Number(values.capacity), schedule: values.schedule.trim() });
       setFlash(`${added.cohortNo}기가 추가됐어요`);
-      router.replace("/admin");
+      router.replace(`/admin/courses/${c.id}`);
     } catch (e) {
       setSaving(false);
       // 백엔드가 거절한 경우 칸별 안내를, 연결 문제면 전체 안내를 보여 준다
@@ -89,7 +89,7 @@ export default function NewCohortPage() {
 
   return (
     <main>
-      <TopBar title="기수 추가" backHref="/admin" />
+      <TopBar title="기수 추가" backHref={`/admin/courses/${id}`} />
       <form noValidate onSubmit={onSubmit} className="space-y-3 px-4 pt-4">
         <div className="flex items-center gap-3 rounded-3xl bg-white p-3">
           <CategoryThumb category={c.category} size="sm" />

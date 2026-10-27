@@ -71,7 +71,7 @@ export default function NewCoursePage() {
 
     setSaving(true);
     try {
-      await createCourse({
+      const created = await createCourse({
         title: values.title.trim(),
         category: values.category as Category,
         level: values.level as Level,
@@ -93,7 +93,7 @@ export default function NewCoursePage() {
         })),
       });
       setFlash("과정이 등록됐어요");
-      router.replace("/admin");
+      router.replace(`/admin/courses/${created.id}`);
     } catch (e) {
       setSaving(false);
       // 백엔드가 거절한 경우 칸별 안내를, 연결 문제면 전체 안내를 보여 준다
