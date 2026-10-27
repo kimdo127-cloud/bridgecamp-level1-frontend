@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { CohortFields } from "@/components/cohort-fields";
 import { useFormErrors } from "@/components/use-form-errors";
-import { BottomBar, ErrorSummary, Field, SectionCard, TopBar, inputClass, primaryButton, secondaryButton, setFlash } from "@/components/ui";
+import { BottomBar, Field, SectionCard, TopBar, inputClass, primaryButton, secondaryButton, setFlash } from "@/components/ui";
 import { ApiError, createCourse } from "@/lib/api";
 import { CATEGORIES, FORMATS, LEVELS, type Category, type Format, type Level } from "@/lib/types";
 import { validateCourse, type CohortFormValues, type CourseFormValues } from "@/lib/validation";
@@ -113,16 +113,6 @@ export default function NewCoursePage() {
           <span className="text-brand-600">*</span> 표시는 꼭 채워 주세요.
         </p>
 
-        <ErrorSummary
-          errors={errors}
-          focusSignal={form.focusSignal}
-          onSelect={form.goTo}
-          // 같은 문구가 기본 정원과 기수 정원에 함께 나올 수 있어 기수 오류에는 몇 기인지 붙인다
-          prefixFor={(key) => {
-            const m = key.match(/^cohorts\.(\d+)\./);
-            return m ? `${Number(m[1]) + 1}기 · ` : "";
-          }}
-        />
         {formError && (
           <p role="alert" className="rounded-2xl bg-[#fff4f4] px-4 py-3 text-sm text-[#a83232]">
             {formError}

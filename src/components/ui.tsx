@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { Category } from "@/lib/types";
 
 const THUMBS: Record<Category, { emoji: string; bg: string }> = {
@@ -164,47 +164,6 @@ export function Field({
       ) : (
         hint && <p className="text-[13px] leading-snug text-ink-soft">{hint}</p>
       )}
-    </div>
-  );
-}
-
-// 제출에 실패하면 맨 위에 오류 목록을 보여 주고, 항목을 누르면 그 칸으로 이동한다 (GOV.UK error summary)
-export function ErrorSummary({
-  errors,
-  focusSignal,
-  onSelect,
-  prefixFor,
-}: {
-  errors: Record<string, string>;
-  focusSignal: number;
-  onSelect: (key: string) => void;
-  prefixFor?: (key: string) => string;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const entries = Object.entries(errors).filter(([k]) => k !== "form");
-
-  // 제출할 때마다 요약으로 포커스를 옮겨 화면 읽기 프로그램과 스크롤이 요약부터 시작하게 한다
-  useEffect(() => {
-    if (focusSignal > 0 && ref.current) {
-      ref.current.focus();
-      ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, [focusSignal]);
-
-  if (entries.length === 0) return null;
-  return (
-    <div ref={ref} tabIndex={-1} role="alert" className="scroll-mt-20 rounded-2xl border-2 border-[#e5484d] bg-[#fff4f4] px-4 py-3 text-sm text-[#a83232] outline-none">
-      <p className="font-bold">입력한 내용을 다시 확인해 주세요 ({entries.length}개)</p>
-      <ul className="mt-2 space-y-1.5">
-        {entries.map(([key, message]) => (
-          <li key={key}>
-            <button type="button" onClick={() => onSelect(key)} className="text-left underline underline-offset-2 active:opacity-70">
-              {prefixFor?.(key)}
-              {message}
-            </button>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }

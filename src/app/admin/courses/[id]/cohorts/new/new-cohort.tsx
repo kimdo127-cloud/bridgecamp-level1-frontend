@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { CohortFields } from "@/components/cohort-fields";
 import { useFormErrors } from "@/components/use-form-errors";
-import { BottomBar, CategoryThumb, ErrorSummary, HomeLink, SectionCard, Skeleton, StatusScreen, TopBar, primaryButton, setFlash } from "@/components/ui";
+import { BottomBar, CategoryThumb, HomeLink, SectionCard, Skeleton, StatusScreen, TopBar, primaryButton, setFlash } from "@/components/ui";
 import { ApiError, addCohort, getCourse } from "@/lib/api";
 import { cohortStatusLabel, formatShortDate, weeksLabel } from "@/lib/format";
 import type { CourseWithCohorts } from "@/lib/types";
@@ -100,7 +100,6 @@ export default function NewCohortPage() {
           </div>
         </div>
 
-        <ErrorSummary errors={errors} focusSignal={form.focusSignal} onSelect={form.goTo} />
         {formError && (
           <p role="alert" className="rounded-2xl bg-[#fff4f4] px-4 py-3 text-sm text-[#a83232]">
             {formError}
