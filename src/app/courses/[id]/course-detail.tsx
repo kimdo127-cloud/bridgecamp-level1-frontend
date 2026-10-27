@@ -236,8 +236,9 @@ function CourseDetail({ c }: { c: CourseWithCohorts }) {
             <p className="text-[12px] text-ink-soft">{next ? `${next.cohortNo}기 ${cohortStatusLabel(next)}` : "다음 기수 준비 중"}</p>
             <p className="text-lg font-extrabold">{formatPrice(c.price)}</p>
           </div>
-          <button type="button" onClick={() => goTo("schedule")} className={primaryButton}>
-            기수 일정 보기
+          {/* Level 1은 신청 기능이 없어 기수 일정으로 안내한다. Level 2에서 실제 수강 신청으로 바뀐다 */}
+          <button type="button" onClick={() => goTo("schedule")} disabled={!next} className={primaryButton}>
+            {next ? "수강 신청하기" : "모집 예정"}
           </button>
         </div>
       </BottomBar>
